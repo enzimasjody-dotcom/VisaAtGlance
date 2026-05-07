@@ -1,86 +1,107 @@
-# Developer Notes
+# 개발자 노트
 
-Purpose: maintain the current product and implementation standards for VisaAtGlance.
+목적: VisaAtGlance의 현재 제품/구현 기준을 관리한다.
 
-Non-purpose: field-by-field data details, refactoring order, Git workflow, and initial idea archive are managed in `data-model.md`, `refactoring-notes.md`, `git-workflow.md`, and `product-spec-v0.1.md`.
+비목적: 필드별 데이터 설명, 리팩터링 순서, Git workflow, 초기 아이디어 보관은 각각 `data-model.md`, `refactoring-notes.md`, `git-workflow.md`, `product-spec-v0.1.md`에서 관리한다.
 
-Last updated: 2026-05-07
+최종 업데이트: 2026-05-07
 
-## Product Direction
+## 제품 방향
 
-VisaAtGlance helps users understand visa options, requirements, timelines, and next actions at a glance.
+VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timeline 데이터를 바탕으로 대기 시간, 흐름, 분포를 한눈에 이해하도록 돕는 정보/데이터 시각화 플랫폼이다.
 
-The exact MVP is still open. Until it is decided, the project should keep product logic source-aware, easy to revise, and safe around uncertain information.
-
-| Principle | Description |
+| 원칙 | 설명 |
 |---|---|
-| At-a-glance clarity | Users should quickly understand the status, requirements, and next steps |
-| Source-aware information | Visa details should preserve source, date checked, and confidence where possible |
-| No silent certainty | Unverified or ambiguous information should be marked instead of presented as final |
-| Shared data base | Search, comparison, checklist, and detail screens should use the same records |
-| Portable logic | Domain logic should stay separate from UI and platform-specific code |
+| At-a-glance clarity | 사용자가 processing time, trend, cohort 위치를 빠르게 이해해야 한다 |
+| Source-aware information | 데이터는 source, checked date, sample size, limitation을 함께 가져야 한다 |
+| No legal advice | 비자 추천, 승인 가능성 평가, 개인 맞춤 이민 전략을 제공하지 않는다 |
+| Aggregate-first | 익명 timeline 데이터라도 재식별 위험을 고려해 집계/정제 중심으로 보여준다 |
+| Backend-owned data logic | ingestion, normalization, cohort 계산, privacy guard는 backend/domain 쪽이 소유한다 |
+| Shared data base | 공개 dashboard, timeline 입력, saved dashboard는 같은 데이터 기준을 공유한다 |
 
-## Core Data
+## 확정된 앱 스택
 
-Field details live in [Data Model](data-model.md).
+| 영역 | 선택 | 기준 |
+|---|---|---|
+| Repo 구조 | `frontend/`, `backend/`, `docs/` monorepo | frontend와 data/backend 로직을 분리하되 한 저장소에서 함께 관리 |
+| Frontend | Next.js + React + TypeScript | SEO 공개 페이지와 interactive dashboard를 함께 지원 |
+| Backend | FastAPI + Python | Google Sheet/USCIS/Visa Bulletin ingestion, cohort 계산, privacy guard를 backend에서 관리 |
+| Styling | Tailwind CSS | 빠른 dashboard layout과 일관된 spacing/color 관리 |
+| Visualization 시작점 | Recharts | MVP 차트 구현 속도와 React 통합성 우선 |
+| Visualization 확장 | ECharts, D3.js | 복잡한 interactive chart나 custom visualization 필요 시 검토 |
+| Frontend hosting | Vercel | Next.js 배포 기본 경로 |
+| Backend hosting | 초기 로컬, 배포는 추후 결정 | Render/Fly.io/Railway/AWS 등은 운영 요구가 선명해진 뒤 선택 |
+| Frontend package manager | npm | 초기 설정 단순화 |
+| Backend package manager | `uv` 우선 검토 | Python dependency와 실행 환경 재현성 확보 |
 
-| Model | Role |
+backend를 scaffold 단계부터 포함한다. VisaAtGlance는 곧바로 데이터 ingestion, 정규화, cohort 계산, small cohort suppression, alerts 준비가 필요하므로 frontend-only 구조로 시작하지 않는다.
+
+## 핵심 데이터
+
+자세한 필드 설명은 [데이터 모델](data-model.md)을 기준으로 한다.
+
+| 모델 | 역할 |
 |---|---|
-| `VisaProgram` | A visa type, pathway, or status category |
-| `Requirement` | A condition, document, fee, deadline, or eligibility rule |
-| `CountryProfile` | Country or jurisdiction context |
-| `UserCase` | User-specific situation used to filter or track options |
-| `SourceRecord` | Source URL, date checked, and confidence metadata |
-| `ChecklistItem` | User-facing next action derived from requirements |
+| `VisaProgram` | 비자 유형, pathway, status category |
+| `Requirement` | 조건, 문서, fee, deadline, eligibility rule |
+| `CountryProfile` | 국가 또는 jurisdiction context |
+| `UserCase` | 사용자의 저장된 scenario와 관심 조건 |
+| `SourceRecord` | source URL, checked date, confidence metadata |
+| `ChecklistItem` | requirement에서 파생된 사용자 action |
 
-## Source and Confidence Policy
+## Source / Confidence 정책
 
-| Rule | Description |
+| 규칙 | 설명 |
 |---|---|
-| Keep source metadata | Requirements should link back to where they came from |
-| Track freshness | Important records should store `lastCheckedAt` when possible |
-| Separate facts from notes | Official requirements and user notes should not be mixed silently |
-| Mark uncertainty | Unknown, stale, or unofficial data should be visible in the UI |
-| Avoid legal advice framing | The app can organize information, but should not pretend to replace professional advice |
+| source metadata 유지 | dashboard 수치와 requirement는 출처를 추적할 수 있어야 한다 |
+| freshness 표시 | 중요한 데이터는 `checkedAt` 또는 `lastReviewedAt` 기준을 가진다 |
+| facts와 notes 분리 | 공식/공개 데이터와 사용자 메모를 조용히 섞지 않는다 |
+| uncertainty 표시 | stale, unofficial, low sample size는 UI에서 드러낸다 |
+| legal advice framing 회피 | 데이터 정리와 통계 비교를 법률 판단처럼 표현하지 않는다 |
 
 ## Planned Screen Areas
 
-These are starting assumptions, not finalized scope.
+초기 화면 가정:
 
 ```text
 Overview
-Search
-Compare
-Checklist
+Processing Dashboard
+Visa Bulletin
+Timeline Input
+Saved Dashboard
 Sources
 Settings
 ```
 
-| Area | Purpose | Possible Content |
+| 화면 | 목적 | 주요 내용 |
 |---|---|---|
-| Overview | Quick summary | Saved visa options, deadlines, missing items, recent source checks |
-| Search | Explore options | Country, nationality, purpose, duration, work/study filters |
-| Compare | Evaluate paths | Side-by-side requirements, timelines, fees, constraints |
-| Checklist | Track actions | Documents, forms, appointments, fees, reminders |
-| Sources | Audit data | URLs, official/unofficial flag, last checked date |
-| Settings | Preferences | Home country, destination country, status, saved cases |
+| Overview | 공개 첫 화면 | 핵심 지표, public charts, recent aggregate trends |
+| Processing Dashboard | USCIS 처리 시간 이해 | category/service center별 비교, historical trend |
+| Visa Bulletin | 월별 bulletin 변화 추적 | category movement, priority date trend |
+| Timeline Input | 즉시 통계 비교 | average wait, percentile, similar cohort |
+| Saved Dashboard | 로그인 사용자 retention | saved timeline, custom dashboard, alerts |
+| Sources | 데이터 투명성 | source, checked date, sample size, limitation |
+| Settings | 사용자 설정 | account, alert preference, saved cohort 관리 |
 
-## Implementation Standards
+## 구현 기준
 
-| Area | Direction |
+| 영역 | 방향 |
 |---|---|
-| Domain logic | Keep visa matching, checklist generation, and source freshness rules outside UI components |
-| Storage | Put persistence behind a narrow API once a stack is chosen |
-| UI | Prioritize dense, readable, task-focused screens over marketing-style pages |
-| Data updates | Prefer explicit review before replacing sourced requirements |
-| Tests | Add focused tests around matching, requirements, and checklist generation once logic exists |
+| Backend API | FastAPI에서 `/health`, ingestion, cohort, privacy guard API를 단계적으로 제공한다 |
+| Domain logic | cohort 계산, privacy guard, source freshness를 frontend component 밖에 둔다 |
+| Frontend UI | Next.js page는 API 결과를 읽어 dashboard와 chart를 보여주는 presentation layer로 유지한다 |
+| Storage | 저장 방식은 backend의 좁은 API 뒤에 둔다. 초기에는 파일/샘플 데이터, 이후 DB를 검토한다 |
+| Visualization | Recharts로 시작하고 복잡도가 실제로 필요해질 때 ECharts/D3를 추가한다 |
+| Data updates | source와 limitation을 보존하며, 불확실한 업데이트는 검토 가능하게 둔다 |
+| Tests | backend cohort/privacy/source freshness 테스트를 우선하고, frontend는 smoke/build부터 시작한다 |
 
 ## Open Decisions
 
-| Topic | Current Status |
+| 주제 | 현재 상태 |
 |---|---|
-| App stack | Not selected |
-| MVP user | Needs decision |
-| Data source strategy | Needs decision |
-| Offline/local storage vs backend | Needs decision |
-| Jurisdiction coverage | Needs decision |
+| MVP user segment | 아직 결정 필요 |
+| 첫 데이터 ingestion 방식 | Google Sheet 샘플 기반 검토 예정 |
+| backend 배포 대상 | scaffold 이후 결정 |
+| DB 선택 | 초기 ingestion 구조 확인 후 결정 |
+| 인증 방식 | saved timeline 단계에서 결정 |
+| jurisdiction coverage | 미국 중심으로 시작, 세부 category 범위 결정 필요 |
