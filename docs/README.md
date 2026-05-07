@@ -1,43 +1,44 @@
-# Docs Map
+# 문서 지도
 
-VisaAtGlance docs separate product decisions, data structure, refactoring plans, and Git workflow so the repository stays easy to maintain.
+VisaAtGlance 문서는 제품 결정, 데이터 구조, 리팩터링 계획, Git 워크플로우를 섞지 않기 위해 역할을 나누어 관리한다.
 
-## Document Roles
+## 문서별 역할
 
-| Doc | Role | Update When |
+| 문서 | 역할 | 수정 기준 |
 |---|---|---|
-| [Developer Notes](developer-notes.md) | Current product and implementation standards | Product behavior, screen purpose, or implementation principles change |
-| [Data Model](data-model.md) | Core data structures and field descriptions | Models, fields, storage keys, or relationships change |
-| [Refactoring Notes](refactoring-notes.md) | Code structure improvement plan | Folder structure, extraction order, or structural debt changes |
-| [Git Workflow](git-workflow.md) | Planning, commit, push, and QA rules | Development procedure or checklist changes |
-| [Product Spec v0.1](product-spec-v0.1.md) | Initial idea archive | Usually not edited after the current standards docs exist |
+| [개발자 노트](developer-notes.md) | 현재 제품/구현 기준 | 제품 동작, 화면 목적, 구현 원칙이 바뀔 때 |
+| [데이터 모델](data-model.md) | 핵심 데이터 구조와 필드 설명 | 모델, 필드, 저장 키, 관계가 바뀔 때 |
+| [리팩터링 노트](refactoring-notes.md) | 코드 구조 개선 계획 | 폴더 구조, 추출 순서, 구조적 부채가 바뀔 때 |
+| [Git 워크플로우](git-workflow.md) | 계획, 커밋, 푸쉬, QA 규칙 | 개발 절차나 체크리스트가 바뀔 때 |
+| [제품 스펙 v0.1](product-spec-v0.1.md) | 초기 아이디어 보관 | 원칙적으로 수정하지 않음 |
 
-## Writing Rules
+## 작성 규칙
 
-| Rule | Description |
+| 규칙 | 설명 |
 |---|---|
-| Record final decisions | Do not copy the whole brainstorming process into docs |
-| Pick the doc owner first | Decide which document owns the change before editing |
-| Remove conflicts | When an old decision changes, update the old text instead of adding a contradictory note |
-| Keep it short | Prefer tables, checklists, and examples over long prose |
-| Avoid extra docs | Add a section to an existing doc unless a new doc has a clear long-term role |
-| Review docs before push | Before pushing, scan `docs/` for stale or conflicting information |
+| 한국어로 작성 | 앞으로 모든 문서 업데이트는 한국어로 작성한다 |
+| 최종 결정만 기록 | 브레인스토밍 과정 전체를 문서에 옮기지 않는다 |
+| 문서 주인 먼저 결정 | 수정 전에 어느 문서가 이 내용을 소유하는지 정한다 |
+| 충돌 제거 | 오래된 결정이 바뀌면 새 문단을 추가하지 말고 기존 내용을 고친다 |
+| 짧게 쓴다 | 긴 설명보다 표, 체크리스트, 예시를 우선한다 |
+| 새 문서 남발 금지 | 기존 문서 역할에 맞으면 새 문서를 만들지 않는다 |
+| 푸쉬 전 전체 검토 | 푸쉬 전에는 `docs/` 전체를 훑고 오래된 내용이나 새 변경과 충돌하는 내용을 정리한다 |
 
-## New Decision Recording Process
+## 새 결정 기록 절차
 
-1. Confirm the direction in conversation first.
-2. Choose the document that owns the decision.
-3. Record only the final decision and short reasoning.
-4. If QA changes, update [Git Workflow](git-workflow.md).
-5. If structure changes, update [Refactoring Notes](refactoring-notes.md).
-6. Before pushing, scan all docs for consistency.
+1. 대화에서 방향을 먼저 확정한다.
+2. 문서 주인을 정한다.
+3. 최종 결정과 이유만 기록한다.
+4. QA에 영향이 있으면 [Git 워크플로우](git-workflow.md)에 반영한다.
+5. 구조 변경에 영향이 있으면 [리팩터링 노트](refactoring-notes.md)에 반영한다.
+6. 푸쉬 전에는 전체 문서 최신성을 다시 확인한다.
 
-## New Document Criteria
+## 새 문서 생성 기준
 
-Create a new doc only when all of these are true:
+새 문서는 아래 조건을 모두 만족할 때만 만든다.
 
-- The topic will be updated repeatedly.
-- The topic is clearly different from existing document roles.
-- Adding it to an existing doc would make that doc harder to read.
+- 앞으로 반복적으로 업데이트될 주제다.
+- 기존 문서의 역할과 명확히 다르다.
+- 기존 문서에 넣으면 그 문서가 읽기 어려워진다.
 
-Otherwise, add a section to the closest existing document.
+그 외에는 가장 가까운 기존 문서에 섹션으로 추가한다.
