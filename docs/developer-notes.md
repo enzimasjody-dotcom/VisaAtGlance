@@ -83,6 +83,35 @@ Settings
 | Sources | 데이터 투명성 | source, checked date, sample size, limitation |
 | Settings | 사용자 설정 | account, alert preference, saved cohort 관리 |
 
+## 페이지 모델
+
+VisaAtGlance는 Tableau 같은 analytics platform landing 구조를 참고할 수 있다. 단, 레이아웃, 문구, 브랜드 표현을 복제하지 않고 정보 구조와 UX 패턴만 참고한다.
+
+초기 public page 구조:
+
+```text
+Header
+  Dashboard / Processing Times / Visa Bulletin / Timeline / Sources / About / Sign in
+Hero
+  US visa information, at a glance.
+  Public dashboard preview + primary CTA
+Public Data Sections
+  USCIS Processing Dashboard / Visa Bulletin Tracker / Recent Approvals / Aggregate Trends
+User Value Section
+  Enter timeline -> average wait / percentile / similar cohort -> save with login
+Trust and Safety Section
+  Informational platform / no legal advice / official sources linked / privacy-minimal data
+Footer
+  About / Contact / Privacy Policy / Terms / Disclaimer
+```
+
+원칙:
+
+- 첫 화면은 마케팅 hero만 두지 않고 public dashboard preview를 강하게 보여준다.
+- Tableau식 제품 섹션 구조는 참고하되 VisaAtGlance의 legal-safe language와 데이터 투명성을 우선한다.
+- 제품명, 카피, 색상, 레이아웃을 Tableau와 혼동될 정도로 유사하게 만들지 않는다.
+- CTA는 `Explore public dashboard`, `Compare my timeline`처럼 정보 탐색과 통계 비교 중심으로 둔다.
+
 ## 구현 기준
 
 | 영역 | 방향 |
