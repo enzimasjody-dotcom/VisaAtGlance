@@ -1,0 +1,15 @@
+[project]
+name = "visaatglance-backend"
+version = "0.1.0"
+description = "FastAPI backend for VisaAtGlance data ingestion, cohort analysis, and privacy-safe dashboard data."
+requires-python = ">=3.14"
+dependencies = [
+  "fastapi==0.124.0",
+  "httpx==0.28.1",
+  "uvicorn[standard]==0.38.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.0.2",
+]

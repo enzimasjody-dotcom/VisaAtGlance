@@ -21,14 +21,35 @@ VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timel
 | Frontend hosting | Vercel |
 | Backend hosting | 초기 로컬, 배포는 추후 결정 |
 | Frontend package manager | npm |
-| Backend package manager | scaffold 시 `uv` 우선 검토 |
+| Backend package manager | `uv` |
 
-아직 앱 scaffold는 생성하지 않았다. 다음 단계에서 `frontend/`와 `backend/`를 만든 뒤 아래 명령을 실제 실행 명령으로 업데이트한다.
+초기 scaffold는 `frontend/`와 `backend/`를 함께 실행하는 방식으로 구성한다.
 
 ```bash
-# TODO: frontend install/run
-# TODO: backend install/run
+make visa-install
+make visa-dev
 ```
+
+분리 실행:
+
+```bash
+make visa-frontend-dev
+make visa-backend-dev
+```
+
+기본 확인:
+
+```bash
+make visa-check
+```
+
+개발 서버 기본 주소:
+
+| 서비스 | 주소 |
+|---|---|
+| Frontend | `http://localhost:3000` |
+| Backend | `http://localhost:8000` |
+| Backend health | `http://localhost:8000/health` |
 
 ---
 
@@ -67,7 +88,7 @@ VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timel
 | 앱 스택 | Next.js frontend + FastAPI backend monorepo로 확정 |
 | 데이터 모델 | 초안 작성 완료 |
 | 문서 workflow | ClassPilot 형식을 참고해 생성 완료 |
-| 첫 구현 | `frontend/`, `backend/` scaffold 예정 |
+| 첫 구현 | `frontend/`, `backend/` scaffold 완료 |
 
 ---
 
@@ -79,4 +100,15 @@ VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timel
 git diff --check
 ```
 
-앱 scaffold 후 frontend/backend typecheck, lint, test, build 명령을 이 섹션에 추가한다.
+앱 scaffold 기본 확인:
+
+```bash
+make visa-check
+```
+
+개별 확인:
+
+```bash
+make visa-frontend-check
+make visa-backend-check
+```

@@ -32,7 +32,7 @@ VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timel
 | Frontend hosting | Vercel | Next.js 배포 기본 경로 |
 | Backend hosting | 초기 로컬, 배포는 추후 결정 | Render/Fly.io/Railway/AWS 등은 운영 요구가 선명해진 뒤 선택 |
 | Frontend package manager | npm | 초기 설정 단순화 |
-| Backend package manager | `uv` 우선 검토 | Python dependency와 실행 환경 재현성 확보 |
+| Backend package manager | `uv` | Python dependency와 실행 환경 재현성 확보 |
 
 backend를 scaffold 단계부터 포함한다. VisaAtGlance는 곧바로 데이터 ingestion, 정규화, cohort 계산, small cohort suppression, alerts 준비가 필요하므로 frontend-only 구조로 시작하지 않는다.
 
