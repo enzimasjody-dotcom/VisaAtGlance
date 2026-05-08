@@ -1,8 +1,8 @@
 # VisaAtGlance 제품 스펙 v0.1
 
-목적: VisaAtGlance의 초기 제품 방향과 운영 원칙을 보관한다.
+목적: VisaAtGlance의 초기 제품 방향, 법적/운영 원칙, 단계별 제품 구조를 보관한다.
 
-비목적: 이 문서는 세부 구현 기준, 데이터 모델, Git workflow, 리팩터링 계획의 기준 문서가 아니다.
+비목적: 세부 구현 기준, 데이터 모델, Git workflow, 리팩터링 계획의 기준 문서가 아니다.
 
 현재 기준 문서:
 
@@ -12,8 +12,7 @@
 | 현재 데이터 모델 | [데이터 모델](data-model.md) |
 | 리팩터링 계획 | [리팩터링 노트](refactoring-notes.md) |
 | 작업 절차 | [Git 워크플로우](git-workflow.md) |
-
-아래 내용은 초기 제품 구상 기록으로 보존한다.
+| 단계별 계획 | [로드맵](roadmap.md) |
 
 ## 1. 프로젝트 목표
 
@@ -59,9 +58,9 @@ VisaAtGlance는 법률 자문을 제공하지 않는다.
 - 승인 가능성 평가
 - 개인 맞춤 이민 전략
 - 법률 의견 제공
-- “이 비자가 유리하다” 같은 판단
-- “승인 가능성이 높다/낮다” 같은 개인별 예측
-- “best visa”, “recommended immigration strategy” 같은 표현
+- "이 비자가 유리하다" 같은 판단
+- "승인 가능성이 높다/낮다" 같은 개인별 예측
+- "best visa", "recommended immigration strategy" 같은 표현
 
 ### 3.2 제공하는 범위
 
@@ -80,7 +79,7 @@ VisaAtGlance는 법률 자문을 제공하지 않는다.
 
 - percentile, histogram, average wait 같은 정보는 통계 비교로만 제공한다.
 - 개인의 승인 가능성, 법적 전략, 신청 판단으로 표현하지 않는다.
-- “similar cases”는 법적 동일성이 아니라 사용자가 선택한 category, filing date, service center 등 데이터 필드 기준의 cohort를 뜻한다.
+- "similar cases"는 법적 동일성이 아니라 사용자가 선택한 category, filing date, service center 등 데이터 필드 기준의 cohort를 뜻한다.
 
 ### 3.3 필수 디스클레이머
 
@@ -312,24 +311,23 @@ Premium 후보:
 
 ## 8. 기술 구조
 
-추천 스택:
+현재 확정된 초기 스택:
 
-| 영역 | 후보 |
+| 영역 | 선택 |
 |---|---|
-| Frontend | Next.js, React |
+| Frontend | Next.js, React, TypeScript |
 | Visualization 기본 | Recharts |
-| Visualization 확장 | ECharts |
-| Custom visualization | D3.js |
-| Backend | Next.js API routes, Node.js, FastAPI |
-| Hosting | Vercel |
+| Backend | FastAPI, Python |
+| Backend dependency/runtime | uv |
+| Repository | frontend/backend monorepo |
+| Frontend hosting 후보 | Vercel |
+| Backend hosting | 미정 |
 
-초기 추천:
+확장 검토 기준:
 
-- SEO와 dashboard를 함께 고려해 Next.js를 우선 검토한다.
-- 기본 chart는 Recharts로 시작한다.
 - 복잡한 interactive chart가 필요해지면 ECharts를 검토한다.
 - D3.js는 커스텀 시각화가 명확히 필요할 때만 사용한다.
-- 데이터 파이프라인이 커지면 FastAPI를 별도 backend로 검토한다.
+- DB와 backend hosting은 ingestion, privacy guard, saved timeline 요구가 명확해진 뒤 결정한다.
 
 ## 9. AdSense 승인 준비
 
