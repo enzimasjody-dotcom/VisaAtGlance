@@ -203,12 +203,49 @@ Requirement
 | `hidePercentilesBelowMinimum` | `boolean` | 작은 표본에서 percentile 숨김 | `true` |
 | `maskRowLevelData` | `boolean` | row-level data masking | `true` |
 
+
+## Apr '26 탭 구현 기준
+
+Phase 2 backend domain model은 Google Sheet `Apr '26` 탭의 I-485 timeline 컬럼을 기준으로 시작한다.
+
+| Spreadsheet 컬럼 | Backend 필드 | 공개/집계 기준 |
+|---|---|---|
+| `Priority Date` | `priority_date` | cohort filter 후보 |
+| `Category` | `category` | cohort filter 기본값 |
+| `I-485 Mailed Date` | `i485_mailed_date` | processing start fallback |
+| `I-485 Received Date` | `i485_received_date` | processing start 우선값 |
+| `I-485 Receipt (I-797) Date` | `i485_receipt_date` | processing start fallback |
+| `Block #` | `block_number` | partial block만 보관, full receipt number 금지 |
+| `Lockbox` | `lockbox` | cohort filter 후보 |
+| `Biometric Date` | `biometric_date` | timeline event |
+| `Interview` | `interview_status` | free-text status, public row 노출 금지 |
+| `EAD (I-765) Approval Date if applied` | `ead_approval_date` | timeline event |
+| `Advanced Parole (I-131) Approval if applied` | `advanced_parole_approval_date` | timeline event |
+| `Field Office Name` | `field_office_name` | cohort filter 후보 |
+| `Field Office Transfer Date` | `field_office_transfer_date` | timeline event |
+| `FTA0 updates` | `fta_updates` | free-text status, aggregate 전용 |
+| `Silent updates after biometrics` | `silent_updates_after_biometrics` | free-text status, aggregate 전용 |
+| `GC Approved Date` | `gc_approved_date` | approved status와 processing days 계산 |
+| `GC Received Date` | `gc_received_date` | timeline event |
+| `Are you from a country of concern` | `country_of_concern` | 민감하게 취급, 작은 cohort 상세 표시 제한 |
+| `Single/Spouse status` | `applicant_group` | cohort filter 후보 |
+| `Comments` | `comments` | public dashboard에 직접 노출하지 않음 |
+
+구현 기준:
+
+- `TimelineRecord.status`는 `gc_approved_date`가 있으면 `approved`, 없으면 `pending`으로 계산한다.
+- `TimelineRecord.processing_days`는 `GC Approved Date - I-485 Received Date`를 우선 사용하고, 없으면 receipt/mailed date를 fallback으로 사용한다.
+- `TimelineRecord.visibility` 기본값은 `aggregate_only`다.
+- `CohortSummary.sample_size`는 유사 case count로 사용한다.
+- `CohortSummary.user_percentile`과 `recent_approval_count`는 `PrivacyRule` 기준을 통과할 때만 표시한다.
+- `comments`, `interview_status`, update text처럼 자유 입력값은 public row로 직접 노출하지 않는다.
+
 ## 아직 확정되지 않은 부분
 
 | 주제 | 현재 상태 |
 |---|---|
 | DB 선택 | 아직 확정하지 않음 |
-| Google Sheet import schema | 다음 단계에서 샘플 기반 검토 |
+| Google Sheet import schema | `Apr '26` 탭 기준 backend domain field 초안 구현 |
 | USCIS/Visa Bulletin ingestion 방식 | 다음 단계에서 결정 |
-| small cohort 기준값 | 초기 후보 필요 |
+| small cohort 기준값 | 기본 후보: percentile 20건 미만 숨김, recent trend 10건 미만 숨김 |
 | user deletion flow | 로그인 기능 전 설계 필요 |
