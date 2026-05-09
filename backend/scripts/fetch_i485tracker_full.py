@@ -3,7 +3,7 @@ from pathlib import Path
 import httpx
 
 from app.ingestion.i485tracker import make_i485tracker_mock_source, parse_i485tracker_json
-from app.ingestion.quality import build_timeline_quality_report
+from app.ingestion.quality import build_validation_gate_report
 
 DEFAULT_URL = "https://i485tracker.opentoolkits.com/api/cases"
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / ".data" / "i485tracker_cases.full.json"
@@ -29,7 +29,7 @@ def main() -> None:
 
     source = make_i485tracker_mock_source(source_id="source-i485tracker-full-local")
     result = parse_i485tracker_json(payload, source)
-    report = build_timeline_quality_report(result.records).model_dump_json(indent=2)
+    report = build_validation_gate_report(result.records, result.errors).model_dump_json(indent=2)
     args.report.write_text(report)
 
     print(f"saved full data: {args.output}")
