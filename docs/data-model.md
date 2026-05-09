@@ -140,7 +140,7 @@ Requirement
 | `notes` | `string?` | free-text notes | `Interview waived` |
 | `lastUpdated` | `string?` | last updated date | `2026-05-07` |
 | `hasPassword` | `boolean` | dev/user-contributed row lock hint | `false` |
-| `sourceId` | `string?` | source record ID | `source-apr-26` |
+| `source_id` | `string?` | source record ID | `source-apr-26` |
 | `visibility` | `private \| aggregate-only \| public-preview` | 공개 범위 | `aggregate-only` |
 | `createdAt` | `string` | 생성 시각 ISO string | `2026-05-07T18:00:00.000Z` |
 
@@ -159,7 +159,7 @@ Requirement
 | `id` | `string` | 고유 ID | `cohort-eb2-nebraska-2025-q1` |
 | `visaProgramId` | `string` | 관련 visa program | `us-eb2` |
 | `filters` | `Record<string, string>` | cohort 기준 | `{ "serviceCenter": "Nebraska" }` |
-| `sampleSize` | `number` | 표본 수 | `128` |
+| `sample_size` | `number` | 표본 수 | `128` |
 | `averageWaitDays` | `number?` | 평균 대기일 | `116` |
 | `medianWaitDays` | `number?` | 중앙값 대기일 | `109` |
 | `percentiles` | `Record<string, number>?` | percentile 집계 | `{ "p75": 142 }` |
@@ -172,16 +172,16 @@ Requirement
 
 | 필드 | 타입 | 목적 | 예시 |
 |---|---|---|---|
-| `totalRecords` | `number` | 전체 normalized record 수 | `480` |
-| `approvedRecords` | `number` | approval date가 있어 처리기간 계산 가능한 후보 | `53` |
-| `pendingRecords` | `number` | 아직 승인일이 없는 record 수 | `427` |
-| `categoryCounts` | `DashboardBucket[]` | category별 aggregate count | `[{ "label": "EB2 NIW", "count": 120 }]` |
-| `fieldOfficeCounts` | `DashboardBucket[]` | field office별 aggregate count | `[{ "label": "NBC", "count": 103 }]` |
-| `statusCounts` | `DashboardBucket[]` | normalized status 분포 | `[{ "label": "approved", "count": 53 }]` |
-| `processingDays` | `ProcessingDaysSummary` | approved record의 처리기간 요약 | `{ "sampleSize": 53, "medianDays": 245 }` |
+| `total_records` | `number` | 전체 normalized record 수 | `480` |
+| `approved_records` | `number` | approval date가 있어 처리기간 계산 가능한 후보 | `53` |
+| `pending_records` | `number` | 아직 승인일이 없는 record 수 | `427` |
+| `category_counts` | `DashboardBucket[]` | category별 aggregate count | `[{ "label": "EB2 NIW", "count": 120 }]` |
+| `field_office_counts` | `DashboardBucket[]` | field office별 aggregate count | `[{ "label": "NBC", "count": 103 }]` |
+| `status_counts` | `DashboardBucket[]` | normalized status 분포 | `[{ "label": "approved", "count": 53 }]` |
+| `processing_days` | `ProcessingDaysSummary` | approved record의 처리기간 요약 | `{ "sampleSize": 53, "medianDays": 245 }` |
 | `cohorts` | `PublicDashboardCohort[]` | `cat + fieldOffice` 기준 공개 가능한 cohort summary | `[{ "sampleSize": 20 }]` |
 | `sources` | `DashboardSourceSummary[]` | source, checked date, limitation, sample size | `[{ "sourceId": "source-i485tracker-mock-v0" }]` |
-| `suppressedSmallCohortCount` | `number` | small cohort로 개별 label을 숨긴 cohort 수 | `166` |
+| `suppressed_small_cohort_count` | `number` | small cohort로 개별 label을 숨긴 cohort 수 | `166` |
 | `warnings` | `string[]` | dashboard 주변에 표시할 data limitation 후보 | `["small cohort bucket은 ..."]` |
 
 공개 제한:
@@ -189,7 +189,7 @@ Requirement
 - `id`, `notes`, `receiptBlock`, full raw row는 포함하지 않는다.
 - small cohort bucket은 개별 label을 숨기고 `suppressed_small_cohort` aggregate bucket으로 합친다.
 - percentile이나 recent trend 성격의 값은 `PrivacyRule`을 통과하는 cohort에서만 표시한다.
-- API route는 후속 작업에서 붙이고, 이번 기준은 domain/service layer의 response contract다.
+- `GET /dashboard/public` API route는 local mock fixture를 읽어 이 aggregate-only response contract를 반환한다. full-data cache, DB, 외부 API runtime 연결은 후속 작업으로 둔다.
 
 ## SourceRecord
 
