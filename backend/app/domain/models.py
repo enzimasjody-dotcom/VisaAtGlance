@@ -10,9 +10,13 @@ class HealthStatus(BaseModel):
 
 
 class CaseStatus(StrEnum):
-    PENDING = "pending"
+    FILED = "filed"
+    PENDING_BIO = "pending_bio"
+    BIOMETRICS_DONE = "biometrics_done"
+    EAD_APPROVED = "ead_approved"
+    INTERVIEW = "interview"
     APPROVED = "approved"
-    DENIED = "denied"
+    RECEIVED = "received"
     UNKNOWN = "unknown"
 
 
@@ -38,50 +42,63 @@ class SourceKind(StrEnum):
 
 
 class TimelineRecord(BaseModel):
-    """Normalized I-485 timeline row based on the Apr '26 spreadsheet tab."""
+    """Normalized I-485 timeline record inspired by the i485tracker case shape."""
 
     id: str
-    category: str = Field(description="Spreadsheet Category column, such as EB2 NIW or EB3")
-    priority_date: date | None = None
-    i485_mailed_date: date | None = None
-    i485_received_date: date | None = None
-    i485_receipt_date: date | None = None
-    block_number: str | None = Field(default=None, description="Partial IOE block, not a full receipt number")
-    lockbox: str | None = None
-    biometric_date: date | None = None
-    interview_status: str | None = None
-    ead_approval_date: date | None = None
-    advanced_parole_approval_date: date | None = None
-    field_office_name: str | None = None
-    field_office_transfer_date: date | None = None
-    fta_updates: str | None = None
-    silent_updates_after_biometrics: str | None = None
-    gc_approved_date: date | None = None
-    gc_received_date: date | None = None
-    country_of_concern: str | None = None
-    applicant_group: str | None = Field(default=None, description="Spreadsheet Single/Spouse status column")
-    comments: str | None = Field(default=None, description="Free-text comments; never expose in public aggregate responses")
+    pd: date | None = Field(default=None, description="I-140 priority date")
+    cat: str = Field(description="Visa category, such as EB2 NIW or EB3")
+    filed: date | None = Field(default=None, description="I-485 filed or received date")
+    receipt: date | None = Field(default=None, description="I-485 receipt notice date")
+    receipt_block: str | None = Field(default=None, description="Partial receipt block only; never store full receipt number")
+    bio: date | None = Field(default=None, description="Biometrics date")
+    ead: date | None = Field(default=None, description="EAD approval date")
+    ap: date | None = Field(default=None, description="Advance Parole approval date")
+    field_office: str | None = None
+    fo_transfer_date: date | None = None
+    silent: list[date] = Field(default_factory=list)
+    gc_approved: date | None = None
+    gc_received: date | None = None
+    interview: date | None = None
+    coc: str | None = Field(default="None", description="Country of concern marker, if voluntarily provided")
+    rfe: str | None = Field(default="None", description="RFE status")
+    region: str | None = Field(default=None, description="ROW or NROW when derivable")
+    applicant_group: str | None = Field(default=None, description="Single, spouse, kids grouping when derivable")
+    notes: str | None = Field(default=None, description="Free-text notes; never expose in public aggregate responses")
+    last_updated: date | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    has_password: bool = False
     source_id: str | None = None
     contribution_type: ContributionType = ContributionType.SPREADSHEET
     visibility: RecordVisibility = RecordVisibility.AGGREGATE_ONLY
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @computed_field
     @property
     def status(self) -> CaseStatus:
-        if self.gc_approved_date is not None:
+        if self.gc_received is not None:
+            return CaseStatus.RECEIVED
+        if self.gc_approved is not None:
             return CaseStatus.APPROVED
-        return CaseStatus.PENDING
+        if self.interview is not None:
+            return CaseStatus.INTERVIEW
+        if self.ead is not None:
+            return CaseStatus.EAD_APPROVED
+        if self.bio is not None:
+            return CaseStatus.BIOMETRICS_DONE
+        if self.receipt is not None:
+            return CaseStatus.PENDING_BIO
+        if self.filed is not None:
+            return CaseStatus.FILED
+        return CaseStatus.UNKNOWN
 
     @property
     def processing_start_date(self) -> date | None:
-        return self.i485_received_date or self.i485_receipt_date or self.i485_mailed_date
+        return self.filed or self.receipt
 
     @property
     def processing_days(self) -> int | None:
-        if self.gc_approved_date is None or self.processing_start_date is None:
+        if self.gc_approved is None or self.processing_start_date is None:
             return None
-        days = (self.gc_approved_date - self.processing_start_date).days
+        days = (self.gc_approved - self.processing_start_date).days
         return days if days >= 0 else None
 
 
