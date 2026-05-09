@@ -1,0 +1,30 @@
+name: Backend QA
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend-check:
+    name: Backend check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Run backend QA
+        run: make visa-backend-check
