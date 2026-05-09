@@ -257,7 +257,33 @@ Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/a
 - 외부 API를 반복 호출하지 않고 local fixture를 사용한다.
 - production source로 장기 사용하려면 permission/license/운영 리스크를 별도 확인한다.
 - full raw data를 repo에 커밋하지 않는다. 테스트와 개발은 작은 fixture만 사용한다.
-- 규모별 visualization, data quality, performance 비교가 필요할 때만 `backend/scripts/fetch_i485tracker_full.py`를 실행해 `backend/.data/i485tracker_cases.full.json`과 `backend/.data/i485tracker_quality_report.json`을 생성한다. `backend/.data/`는 git ignore 대상이다.
+- 모든 경로는 repo root(`/Users/kimdoyeong/Documents/VisaAtGlance`) 기준으로 기록한다. 규모별 visualization, data quality, performance 비교가 필요할 때만 `cd backend && PYTHONPATH=. uv run python scripts/fetch_i485tracker_full.py`를 실행한다. full-data cache는 `backend/.data/i485tracker_cases.full.json`과 `backend/.data/i485tracker_quality_report.json`에 생성되며 git에 커밋하지 않는다.
+
+
+### Phase 3 validation gate 결과
+
+2026-05-09 기준 local full-data cache를 validation gate로 재생성한 결과는 다음과 같다. 이 raw file과 report file은 `backend/.data/` 아래에만 두고 git에는 커밋하지 않는다.
+
+| 항목 | 결과 | 의미 |
+|---|---:|---|
+| normalized records | 480 | public aggregate dashboard 개발에 사용할 수 있는 변환 성공 record |
+| invalid raw rows | 8 | invalid sample 검토 필요. 현재 blocker는 아니지만 source quality warning으로 표시 |
+| invalid ratio | 1.64% | warning threshold 5% 이하 |
+| approved records | 53 | processing days 계산 가능 record |
+| pending records | 427 | 현재 pending 중심 데이터셋 |
+| field office missing | 0 | `cat + field_office` cohort 구성 가능 |
+| total cohorts | 174 | `cat + field_office` 기준 cohort 수 |
+| publishable cohorts | 8 | 기본 minimum cohort size를 통과해 aggregate 공개 가능 |
+| percentile-ready cohorts | 4 | percentile 공개 기준을 통과하는 cohort |
+| small cohorts | 166 | percentile/recent trend 숨김 또는 warning 필요 |
+| largest cohort size | 103 | 큰 cohort visualization 성능 확인 가능 |
+
+판단:
+
+- `public_dashboard_ready`는 `true`다. blocker는 없다.
+- 단, invalid raw row가 있으므로 invalid sample review를 dashboard 착수 전/중에 계속 유지한다.
+- small cohort가 많으므로 public dashboard는 aggregate-first로 시작하고, percentile과 recent trend는 `PrivacyRule`을 통과하는 cohort에서만 표시한다.
+- full-data cache는 개발 검증용이며 production source로 장기 사용하려면 permission/license/운영 리스크를 별도 확인한다.
 
 ### Apr '26 spreadsheet adapter 후보
 
