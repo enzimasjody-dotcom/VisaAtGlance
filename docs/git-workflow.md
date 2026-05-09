@@ -158,7 +158,7 @@ Host github-enzimas
 규칙:
 
 - 문서 변경 후 `git diff --check`를 실행한다.
-- 변경된 문서 파일을 하나씩 나누어 diff를 보여준다.
+- 변경된 문서 파일을 하나씩 나누어 diff를 보여준다. VS Code diff를 사용할 때는 `git show` 결과를 실제 임시 base 파일로 저장한 뒤 `code --diff base current`로 열어야 하며, process substitution처럼 diff가 현재 파일로만 열릴 수 있는 방식은 피한다.
 - 새 파일은 전체 내용을 보여주기보다 구조와 핵심 섹션 diff를 우선 보여준다.
 - diff가 길면 바뀐 섹션 중심으로 잘라 보여주되, 생략 사실을 명시한다.
 - 사용자가 승인하기 전에는 커밋, 푸쉬, 다음 대규모 문서 수정으로 넘어가지 않는다.

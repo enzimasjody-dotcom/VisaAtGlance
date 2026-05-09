@@ -129,7 +129,7 @@ Footer
 | 주제 | 현재 상태 |
 |---|---|
 | MVP user segment | 아직 결정 필요 |
-| 첫 데이터 ingestion 방식 | Google Sheet 샘플 기반 검토 예정 |
+| 첫 데이터 ingestion 방식 | i485tracker-like local mock fixture와 ignored full-data cache 기반으로 진행. Google Sheet 변환은 후속 후보 |
 | backend 배포 대상 | scaffold 이후 결정 |
 | DB 선택 | 초기 ingestion 구조 확인 후 결정 |
 | 인증 방식 | saved timeline 단계에서 결정 |
