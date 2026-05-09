@@ -166,6 +166,31 @@ Requirement
 | `suppressed` | `boolean` | small cohort 등으로 숨김 여부 | `false` |
 | `computedAt` | `string` | 계산 시각 ISO string | `2026-05-07T18:00:00.000Z` |
 
+## PublicDashboardSummary
+
+`PublicDashboardSummary`는 public dashboard가 읽는 aggregate-only 응답이다. `TimelineRecord` row를 직접 노출하지 않고, `PrivacyRule`을 통과한 집계와 source transparency metadata만 담는다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `totalRecords` | `number` | 전체 normalized record 수 | `480` |
+| `approvedRecords` | `number` | approval date가 있어 처리기간 계산 가능한 후보 | `53` |
+| `pendingRecords` | `number` | 아직 승인일이 없는 record 수 | `427` |
+| `categoryCounts` | `DashboardBucket[]` | category별 aggregate count | `[{ "label": "EB2 NIW", "count": 120 }]` |
+| `fieldOfficeCounts` | `DashboardBucket[]` | field office별 aggregate count | `[{ "label": "NBC", "count": 103 }]` |
+| `statusCounts` | `DashboardBucket[]` | normalized status 분포 | `[{ "label": "approved", "count": 53 }]` |
+| `processingDays` | `ProcessingDaysSummary` | approved record의 처리기간 요약 | `{ "sampleSize": 53, "medianDays": 245 }` |
+| `cohorts` | `PublicDashboardCohort[]` | `cat + fieldOffice` 기준 공개 가능한 cohort summary | `[{ "sampleSize": 20 }]` |
+| `sources` | `DashboardSourceSummary[]` | source, checked date, limitation, sample size | `[{ "sourceId": "source-i485tracker-mock-v0" }]` |
+| `suppressedSmallCohortCount` | `number` | small cohort로 개별 label을 숨긴 cohort 수 | `166` |
+| `warnings` | `string[]` | dashboard 주변에 표시할 data limitation 후보 | `["small cohort bucket은 ..."]` |
+
+공개 제한:
+
+- `id`, `notes`, `receiptBlock`, full raw row는 포함하지 않는다.
+- small cohort bucket은 개별 label을 숨기고 `suppressed_small_cohort` aggregate bucket으로 합친다.
+- percentile이나 recent trend 성격의 값은 `PrivacyRule`을 통과하는 cohort에서만 표시한다.
+- API route는 후속 작업에서 붙이고, 이번 기준은 domain/service layer의 response contract다.
+
 ## SourceRecord
 
 `SourceRecord`는 정보 출처와 freshness를 기록한다.
