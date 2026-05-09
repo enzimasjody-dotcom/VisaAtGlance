@@ -3,28 +3,25 @@ from datetime import date
 from app.domain.models import CaseStatus, ContributionType, RecordVisibility, SourceKind, SourceRecord, TimelineRecord
 
 
-def test_timeline_record_matches_apr_26_i485_columns() -> None:
+def test_timeline_record_uses_tracker_like_normalized_shape() -> None:
     record = TimelineRecord(
         id="apr26-row-1",
-        priority_date=date(2024, 3, 8),
-        category="EB2 NIW",
-        i485_mailed_date=date(2026, 4, 1),
-        i485_received_date=date(2026, 4, 1),
-        i485_receipt_date=date(2026, 4, 1),
-        block_number="IOE09362",
-        lockbox="Dallas, TX",
-        biometric_date=date(2026, 4, 14),
-        interview_status="Waived (04/15)",
-        field_office_name="Jacksonville FO (Local)",
-        field_office_transfer_date=date(2026, 4, 21),
-        fta_updates="2x FTA0: 4/14/2026",
-        silent_updates_after_biometrics="4/15, 4/21",
-        country_of_concern="75 COC",
-        applicant_group="ROW / Single",
+        pd=date(2024, 3, 8),
+        cat="EB2 NIW",
+        filed=date(2026, 4, 1),
+        receipt=date(2026, 4, 1),
+        receipt_block="IOE09362",
+        bio=date(2026, 4, 14),
+        field_office="Jacksonville FO (Local)",
+        fo_transfer_date=date(2026, 4, 21),
+        silent=[date(2026, 4, 15), date(2026, 4, 21)],
+        coc="75 COC",
+        region="ROW",
+        applicant_group="Single",
         source_id="source-apr-26",
     )
 
-    assert record.status == CaseStatus.PENDING
+    assert record.status == CaseStatus.BIOMETRICS_DONE
     assert record.processing_days is None
     assert record.contribution_type == ContributionType.SPREADSHEET
     assert record.visibility == RecordVisibility.AGGREGATE_ONLY
@@ -33,9 +30,9 @@ def test_timeline_record_matches_apr_26_i485_columns() -> None:
 def test_approved_timeline_record_calculates_processing_days() -> None:
     record = TimelineRecord(
         id="approved-row",
-        category="EB2 NIW",
-        i485_received_date=date(2026, 4, 1),
-        gc_approved_date=date(2026, 5, 1),
+        cat="EB2 NIW",
+        filed=date(2026, 4, 1),
+        gc_approved=date(2026, 5, 1),
     )
 
     assert record.status == CaseStatus.APPROVED

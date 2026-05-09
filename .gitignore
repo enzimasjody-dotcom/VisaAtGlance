@@ -9,3 +9,5 @@ backend/**/*.pyc
 
 # Editor
 .vscode/
+# Local development data cache
+backend/.data/

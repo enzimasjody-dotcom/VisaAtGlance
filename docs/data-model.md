@@ -114,25 +114,41 @@ Requirement
 
 ## TimelineRecord
 
-`TimelineRecord`는 공개/익명 case timeline을 정규화한 record다.
+`TimelineRecord`는 i485tracker 형식에 가까운 normalized I-485 case timeline record다. Spreadsheet 원본 컬럼은 ingestion 단계에서 이 형식으로 변환한다.
 
 | 필드 | 타입 | 목적 | 예시 |
 |---|---|---|---|
-| `id` | `string` | 고유 ID | `timeline-123` |
-| `visaProgramId` | `string` | 관련 visa category | `us-eb2` |
-| `userCaseId` | `string?` | 로그인 사용자의 저장 case일 때 연결 | `case-default` |
-| `sourceRecordId` | `string?` | 원본 source 또는 import batch | `source-sheet-001` |
-| `filingDate` | `string?` | 접수일 | `2025-01-10` |
-| `approvalDate` | `string?` | 승인일 | `2025-09-21` |
-| `serviceCenter` | `string?` | service center 또는 processing office | `Nebraska` |
-| `caseStatus` | `pending \| approved \| denied \| transferred \| unknown` | 상태 | `approved` |
+| `id` | `string` | 고유 ID | `source-i485tracker-dev:case-1` |
+| `pd` | `string?` | priority date | `2023-07-07` |
+| `cat` | `string` | visa category | `EB2 NIW` |
+| `filed` | `string?` | I-485 filed/received date | `2026-04-01` |
+| `receipt` | `string?` | receipt notice date | `2026-04-06` |
+| `receiptBlock` | `string?` | partial receipt block only | `IOE09362` |
+| `bio` | `string?` | biometric date | `2026-04-14` |
+| `ead` | `string?` | EAD approval date | `2026-05-01` |
+| `ap` | `string?` | Advance Parole approval date | `2026-05-01` |
+| `fieldOffice` | `string?` | field office 또는 processing office | `NBC` |
+| `foTransferDate` | `string?` | field office transfer date | `2026-04-21` |
+| `silent` | `string[]` | silent update dates | `["2026-04-15"]` |
+| `gcApproved` | `string?` | green card approval date | `2026-05-02` |
+| `gcReceived` | `string?` | green card received date | `2026-05-08` |
+| `interview` | `string?` | interview date, if structured | `2026-04-15` |
+| `coc` | `string?` | country of concern marker | `75 COC` |
+| `rfe` | `string?` | RFE status | `None` |
+| `region` | `ROW \| NROW?` | ROW grouping | `ROW` |
+| `applicantGroup` | `string?` | single/spouse/kids grouping | `Spouse` |
+| `notes` | `string?` | free-text notes | `Interview waived` |
+| `lastUpdated` | `string?` | last updated date | `2026-05-07` |
+| `hasPassword` | `boolean` | dev/user-contributed row lock hint | `false` |
+| `sourceId` | `string?` | source record ID | `source-apr-26` |
 | `visibility` | `private \| aggregate-only \| public-preview` | 공개 범위 | `aggregate-only` |
 | `createdAt` | `string` | 생성 시각 ISO string | `2026-05-07T18:00:00.000Z` |
 
 금지:
 
-- `receiptNumber`를 공개 필드로 두지 않는다.
+- full `receiptNumber`를 저장하거나 공개하지 않는다. 개발용 adapter도 `receipt_num`은 partial `receiptBlock`으로 제한한다.
 - 여권 사본, SSN, full case document를 연결하지 않는다.
+- `notes`, `coc`, `receiptBlock`은 public dashboard row에 직접 노출하지 않고 aggregate/privacy guard 뒤에 둔다.
 
 ## CohortSummary
 
@@ -204,48 +220,83 @@ Requirement
 | `maskRowLevelData` | `boolean` | row-level data masking | `true` |
 
 
-## Apr '26 탭 구현 기준
+## Normalized ingestion 기준
 
-Phase 2 backend domain model은 Google Sheet `Apr '26` 탭의 I-485 timeline 컬럼을 기준으로 시작한다.
+Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/aggregate layer` 순서로 처리한다.
+
+### i485tracker-like local mock adapter
+
+`i485tracker`의 공개 shape는 schema reference로만 사용하고, 개발은 repo 안의 작은 local mock fixture로 진행한다.
+
+| i485tracker 필드 | Backend 필드 | 기준 |
+|---|---|---|
+| `pd` | `pd` | ISO date |
+| `cat` | `cat` | 필수 category |
+| `filed` | `filed` | processing start |
+| `receipt` | `receipt` | receipt event |
+| `receipt_num` | `receiptBlock` | partial block만 보관 |
+| `bio` | `bio` | biometric event |
+| `ead` | `ead` | EAD event |
+| `ap` | `ap` | Advance Parole event |
+| `field_office` | `fieldOffice` | cohort filter 후보 |
+| `fo_transfer_date` | `foTransferDate` | timeline event |
+| `silent` | `silent` | ISO date array |
+| `gc_approved` | `gcApproved` | processing days 계산 |
+| `gc_received` | `gcReceived` | timeline event |
+| `interview` | `interview` | timeline event |
+| `coc` | `coc` | 민감하게 취급 |
+| `rfe` | `rfe` | filter 후보 |
+| `region` | `region` | cohort filter 후보 |
+| `notes` | `notes` | public row 직접 노출 금지 |
+| `last_updated` | `lastUpdated` | freshness 후보 |
+| `has_password` | `hasPassword` | user contribution UX 참고 |
+
+주의:
+
+- 데이터 검증은 Phase 3 안에서 먼저 수행한다. public dashboard MVP는 full-data cache 품질 리포트, invalid row sample, raw-to-normalized mapping, small cohort suppression 기준을 확인한 뒤 시작한다.
+- 외부 API를 반복 호출하지 않고 local fixture를 사용한다.
+- production source로 장기 사용하려면 permission/license/운영 리스크를 별도 확인한다.
+- full raw data를 repo에 커밋하지 않는다. 테스트와 개발은 작은 fixture만 사용한다.
+- 규모별 visualization, data quality, performance 비교가 필요할 때만 `backend/scripts/fetch_i485tracker_full.py`를 실행해 `backend/.data/i485tracker_cases.full.json`과 `backend/.data/i485tracker_quality_report.json`을 생성한다. `backend/.data/`는 git ignore 대상이다.
+
+### Apr '26 spreadsheet adapter 후보
+
+Google Sheet `Apr '26` 탭 변환은 후속 작업 후보로 둔다. 현재 Phase 3의 primary 개발 데이터는 i485tracker-like local mock fixture다.
 
 | Spreadsheet 컬럼 | Backend 필드 | 공개/집계 기준 |
 |---|---|---|
-| `Priority Date` | `priority_date` | cohort filter 후보 |
-| `Category` | `category` | cohort filter 기본값 |
-| `I-485 Mailed Date` | `i485_mailed_date` | processing start fallback |
-| `I-485 Received Date` | `i485_received_date` | processing start 우선값 |
-| `I-485 Receipt (I-797) Date` | `i485_receipt_date` | processing start fallback |
-| `Block #` | `block_number` | partial block만 보관, full receipt number 금지 |
-| `Lockbox` | `lockbox` | cohort filter 후보 |
-| `Biometric Date` | `biometric_date` | timeline event |
-| `Interview` | `interview_status` | free-text status, public row 노출 금지 |
-| `EAD (I-765) Approval Date if applied` | `ead_approval_date` | timeline event |
-| `Advanced Parole (I-131) Approval if applied` | `advanced_parole_approval_date` | timeline event |
-| `Field Office Name` | `field_office_name` | cohort filter 후보 |
-| `Field Office Transfer Date` | `field_office_transfer_date` | timeline event |
-| `FTA0 updates` | `fta_updates` | free-text status, aggregate 전용 |
-| `Silent updates after biometrics` | `silent_updates_after_biometrics` | free-text status, aggregate 전용 |
-| `GC Approved Date` | `gc_approved_date` | approved status와 processing days 계산 |
-| `GC Received Date` | `gc_received_date` | timeline event |
-| `Are you from a country of concern` | `country_of_concern` | 민감하게 취급, 작은 cohort 상세 표시 제한 |
-| `Single/Spouse status` | `applicant_group` | cohort filter 후보 |
-| `Comments` | `comments` | public dashboard에 직접 노출하지 않음 |
+| `Priority Date` | `pd` | cohort filter 후보 |
+| `Category` | `cat` | 필수 category |
+| `I-485 Mailed Date` / `I-485 Received Date` | `filed` | received date 우선, 없으면 mailed date |
+| `I-485 Receipt (I-797) Date` | `receipt` | receipt event |
+| `Block #` | `receiptBlock` | partial block만 보관 |
+| `Biometric Date` | `bio` | timeline event |
+| `Interview` | `interview` 또는 `notes` | 날짜가 있으면 event, 아니면 notes |
+| `EAD (I-765) Approval Date if applied` | `ead` | 날짜가 있으면 event |
+| `Advanced Parole (I-131) Approval if applied` | `ap` | 날짜가 있으면 event |
+| `Field Office Name` / `Lockbox` | `fieldOffice` | field office 우선, 없으면 lockbox |
+| `Field Office Transfer Date` | `foTransferDate` | timeline event |
+| `Silent updates after biometrics` | `silent` | date array로 정규화 |
+| `GC Approved Date` | `gcApproved` | processing days 계산 |
+| `GC Received Date` | `gcReceived` | timeline event |
+| `Are you from a country of concern` | `coc` | 민감하게 취급 |
+| `Single/Spouse status` | `region`, `applicantGroup` | ROW/NROW와 group 분리 |
+| `FTA0 updates`, `Comments` | `notes` | public dashboard에 직접 노출하지 않음 |
 
 구현 기준:
 
-- `TimelineRecord.status`는 `gc_approved_date`가 있으면 `approved`, 없으면 `pending`으로 계산한다.
-- `TimelineRecord.processing_days`는 `GC Approved Date - I-485 Received Date`를 우선 사용하고, 없으면 receipt/mailed date를 fallback으로 사용한다.
+- `TimelineRecord.status`는 `gcReceived -> gcApproved -> interview -> ead -> bio -> receipt -> filed` 순서로 계산한다.
+- `TimelineRecord.processingDays`는 `gcApproved - filed`로 계산한다.
 - `TimelineRecord.visibility` 기본값은 `aggregate_only`다.
-- `CohortSummary.sample_size`는 유사 case count로 사용한다.
-- `CohortSummary.user_percentile`과 `recent_approval_count`는 `PrivacyRule` 기준을 통과할 때만 표시한다.
-- `comments`, `interview_status`, update text처럼 자유 입력값은 public row로 직접 노출하지 않는다.
+- `CohortSummary.sampleSize`는 유사 case count로 사용한다.
+- `CohortSummary.userPercentile`과 `recentApprovalCount`는 `PrivacyRule` 기준을 통과할 때만 표시한다.
 
 ## 아직 확정되지 않은 부분
 
 | 주제 | 현재 상태 |
 |---|---|
 | DB 선택 | 아직 확정하지 않음 |
-| Google Sheet import schema | `Apr '26` 탭 기준 backend domain field 초안 구현 |
+| Ingestion schema | i485tracker-like local mock fixture와 normalized `TimelineRecord` adapter 구현 |
 | USCIS/Visa Bulletin ingestion 방식 | 다음 단계에서 결정 |
 | small cohort 기준값 | 기본 후보: percentile 20건 미만 숨김, recent trend 10건 미만 숨김 |
 | user deletion flow | 로그인 기능 전 설계 필요 |

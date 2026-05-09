@@ -6,13 +6,13 @@ from app.domain.privacy import can_expose_row_preview, should_show_percentile, s
 
 
 def _approved_record(index: int, processing_days: int, source_id: str = "source-apr-26") -> TimelineRecord:
-    received = date(2026, 4, 1)
+    filed = date(2026, 4, 1)
     return TimelineRecord(
         id=f"row-{index}",
-        category="EB2 NIW",
-        i485_received_date=received,
-        gc_approved_date=received + timedelta(days=processing_days),
-        lockbox="Dallas, TX",
+        cat="EB2 NIW",
+        filed=filed,
+        gc_approved=filed + timedelta(days=processing_days),
+        field_office="Dallas, TX",
         source_id=source_id,
     )
 
@@ -24,7 +24,7 @@ def test_small_cohort_suppresses_percentile_and_recent_trend() -> None:
 
     summary = summarize_cohort(
         records,
-        cohort_key={"category": "EB2 NIW", "lockbox": "Dallas, TX"},
+        cohort_key={"cat": "EB2 NIW", "field_office": "Dallas, TX"},
         rule=rule,
         user_record=user_record,
         recent_since=date(2026, 4, 20),
@@ -46,7 +46,7 @@ def test_sufficient_cohort_allows_percentile_and_recent_trend() -> None:
 
     summary = summarize_cohort(
         records,
-        cohort_key={"category": "EB2 NIW", "lockbox": "Dallas, TX"},
+        cohort_key={"cat": "EB2 NIW", "field_office": "Dallas, TX"},
         rule=rule,
         user_record=user_record,
         recent_since=date(2026, 4, 20),
@@ -66,7 +66,7 @@ def test_privacy_rule_blocks_row_level_preview_by_default() -> None:
     rule = PrivacyRule()
     record = TimelineRecord(
         id="public-looking-row",
-        category="EB2 NIW",
+        cat="EB2 NIW",
         visibility=RecordVisibility.PUBLIC_PREVIEW,
     )
 

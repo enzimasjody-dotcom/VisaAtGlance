@@ -46,7 +46,7 @@ def summarize_cohort(
 def _recent_approval_count(records: list[TimelineRecord], recent_since: date | None) -> int | None:
     if recent_since is None:
         return None
-    return sum(1 for record in records if record.gc_approved_date is not None and record.gc_approved_date >= recent_since)
+    return sum(1 for record in records if record.gc_approved is not None and record.gc_approved >= recent_since)
 
 
 def _user_percentile(processing_days: list[int], user_record: TimelineRecord | None) -> float | None:
