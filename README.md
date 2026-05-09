@@ -112,3 +112,8 @@ make visa-check
 make visa-frontend-check
 make visa-backend-check
 ```
+
+GitHub Actions:
+
+- `Backend QA` workflow는 `main` push와 pull request에서 `make visa-backend-check`를 실행한다.
+- 기능을 추가할 때는 관련 backend test를 함께 추가하거나, test가 필요 없는 이유를 PR 본문에 남긴다.

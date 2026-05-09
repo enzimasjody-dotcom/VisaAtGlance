@@ -223,6 +223,7 @@ Push decision이 `Ready`일 때만 푸쉬한다.
 
 | 항목 | 상태 |
 |---|---|
-| App stack | 아직 선택하지 않음 |
-| 자동 테스트 | 아직 설정하지 않음 |
-| 수동 UI 확인 | 실행 가능한 첫 앱이 생긴 뒤 시작 |
+| App stack | Next.js frontend + FastAPI backend monorepo로 선택 완료 |
+| 자동 테스트 | backend `make visa-backend-check`를 GitHub Actions `Backend QA` workflow에서 실행 |
+| frontend CI | 아직 GitHub Actions에 연결하지 않음. frontend 변경 PR에서 별도 추가 후보 |
+| 수동 UI 확인 | 실행 가능한 화면 변경이 생길 때 browser smoke check로 시작 |
