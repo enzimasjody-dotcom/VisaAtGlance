@@ -25,7 +25,7 @@ VisaAtGlance는 미국 비자 및 이민 관련 공개 데이터와 익명 timel
 |---|---|---|
 | Repo 구조 | `frontend/`, `backend/`, `docs/` monorepo | frontend와 data/backend 로직을 분리하되 한 저장소에서 함께 관리 |
 | Frontend | Next.js + React + TypeScript | SEO 공개 페이지와 interactive dashboard를 함께 지원 |
-| Backend | FastAPI + Python | Google Sheet/USCIS/Visa Bulletin ingestion, cohort 계산, privacy guard를 backend에서 관리 |
+| Backend | FastAPI + Python | i485tracker-like timeline ingestion, 후속 Google Sheet/USCIS/Visa Bulletin ingestion 후보, cohort 계산, privacy guard를 backend에서 관리 |
 | Styling | Tailwind CSS | 빠른 dashboard layout과 일관된 spacing/color 관리 |
 | Visualization 시작점 | Recharts | MVP 차트 구현 속도와 React 통합성 우선 |
 | Visualization 확장 | ECharts, D3.js | 복잡한 interactive chart나 custom visualization 필요 시 검토 |
