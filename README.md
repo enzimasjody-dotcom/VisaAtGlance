@@ -86,9 +86,9 @@ make visa-check
 |---|---|
 | 제품 방향 | 정보/데이터 시각화 플랫폼으로 정리 완료 |
 | 앱 스택 | Next.js frontend + FastAPI backend monorepo로 확정 |
-| 데이터 모델 | 초안 작성 완료 |
-| 문서 workflow | ClassPilot 형식을 참고해 생성 완료 |
-| 첫 구현 | `frontend/`, `backend/` scaffold 완료 |
+| 데이터 모델 | i485tracker-like timeline, public aggregate, anonymous case/event 기준 정리 |
+| 문서 workflow | 문서 주인, diff 승인, PR 절차 기준 정리 |
+| 현재 구현 초점 | Phase 4A public overview MVP: 첫 화면 chart/copy를 legal-safe public dashboard preview로 정리 |
 
 ---
 
