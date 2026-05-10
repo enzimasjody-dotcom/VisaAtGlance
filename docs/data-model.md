@@ -340,11 +340,22 @@ Requirement
 | `suppressed_small_cohort_count` | `number` | small cohort로 개별 label을 숨긴 cohort 수 | `166` |
 | `warnings` | `string[]` | dashboard 주변에 표시할 data limitation 후보 | `["small cohort bucket은 ..."]` |
 
+### Public dashboard aggregate contract
+
+Phase 4A dashboard chart는 aggregate-only data만 사용한다.
+
+| Aggregate | 필요한 값 | 의미 | 제한 |
+|---|---|---|---|
+| filing-month movement | filing month별 filed count, observed approved count/rate | filing month별 community-data movement 계산 | 최근 cohort는 pending case가 많아 낮게 보일 수 있음 |
+| timeline progression | pending case를 censored/in-progress로 포함한 day-level progression table | community timeline 진행 흐름 계산 | 개인 승인 예측값으로 사용하지 않음 |
+| approved-case processing distribution | approved case의 processing days histogram | recorded approval case의 처리기간 분포 계산 | pending case가 제외되므로 전체 대기시간 추정으로 사용하지 않음 |
+
 공개 제한:
 
 - `id`, `notes`, `receiptBlock`, full raw row는 포함하지 않는다.
 - small cohort bucket은 개별 label을 숨기고 `suppressed_small_cohort` aggregate bucket으로 합친다.
 - percentile이나 recent trend 성격의 값은 `PrivacyRule`을 통과하는 cohort에서만 표시한다.
+- chart별 limitation metadata를 함께 반환하거나 제품 문구 기준에 연결해, observed approval rate와 approved-only distribution이 예측처럼 읽히지 않게 한다.
 - `GET /dashboard/public` API route는 local mock fixture를 읽어 이 aggregate-only response contract를 반환한다. full-data cache, DB, 외부 API runtime 연결은 후속 작업으로 둔다.
 
 ## SourceRecord

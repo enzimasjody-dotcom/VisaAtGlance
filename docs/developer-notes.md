@@ -83,6 +83,24 @@ Settings
 | Sources | 데이터 투명성 | source, checked date, sample size, limitation |
 | Settings | 사용자 설정 | account, alert preference, saved cohort 관리 |
 
+## Public Dashboard Chart Language
+
+Phase 4A public dashboard는 다음 chart label과 안전 문구를 기준으로 한다. 각 문구는 개인 승인 가능성 예측이 아니라 community-data timeline context임을 분명히 해야 한다.
+
+| Chart label | 기반 분석 output | 안전 문구 |
+|---|---|---|
+| `Filing-month cohort movement` | `filing_month_approval_rate.png` | Community-submitted data에서 관측된 filing month별 움직임이다. 최근 cohort는 아직 pending case가 많아 낮게 보일 수 있다. |
+| `Community timeline progression` | `km_approval_curve.png` | Pending case를 still in progress로 포함한 community-data timeline view다. 개인 승인 예측이 아니다. |
+| `Approved-case processing distribution` | `approval_time_histogram.png` | Recorded approval이 있는 case만 보여준다. Pending case가 빠져 있으므로 전체 대기시간 추정으로 읽지 않는다. |
+
+금지 표현:
+
+- `Predict my case`
+- `Approval probability`
+- `Chance of approval`
+- `Expected approval date`
+- 개인별 승인 가능성을 높다/낮다로 판단하는 표현
+
 ## 페이지 모델
 
 VisaAtGlance는 Tableau 같은 analytics platform landing 구조를 참고할 수 있다. 단, 레이아웃, 문구, 브랜드 표현을 복제하지 않고 정보 구조와 UX 패턴만 참고한다.
