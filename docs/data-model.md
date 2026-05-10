@@ -13,8 +13,13 @@ VisaAtGlance는 미국 비자/이민 데이터를 다음 객체로 나누어 관
 | `VisaProgram` | 비자 category, pathway, status type | `Requirement`, `SourceRecord`, `TimelineRecord` |
 | `Requirement` | 조건, 문서, fee, deadline, eligibility rule | `VisaProgram`, `SourceRecord`, `ChecklistItem` |
 | `CountryProfile` | 국가 또는 jurisdiction context | `VisaProgram` |
-| `UserCase` | 사용자의 저장된 scenario와 관심 조건 | `TimelineRecord`, `ChecklistItem`, `CohortSummary` |
-| `TimelineRecord` | 공개/익명 case timeline의 정규화 record | `VisaProgram`, `UserCase`, `SourceRecord` |
+| `UserCase` | 로그인 사용자의 저장된 관심 조건과 claim한 case 목록 | `CaseRecord`, `ChecklistItem`, `CohortSummary` |
+| `CaseRecord` | 사용자가 생성하거나 claim한 I-485 case의 안정적인 기본 record | `CaseEvent`, `CaseEditToken`, `CaseClaim`, `TimelineRecord` |
+| `CaseEvent` | case 진행 중 계속 업데이트되는 timeline event | `CaseRecord`, `SourceRecord` |
+| `CaseEditToken` | 로그인 없이 case를 수정할 수 있는 private edit link 권한 | `CaseRecord` |
+| `CaseClaim` | 익명 case를 로그인 계정에 연결한 기록 | `CaseRecord`, `UserCase` |
+| `DuplicateCandidate` | 비슷한 case가 이미 있는지 판단하는 내부 후보 | `CaseRecord` |
+| `TimelineRecord` | 외부 source 또는 import 데이터를 정규화한 aggregate 입력 record | `VisaProgram`, `CaseRecord`, `SourceRecord` |
 | `CohortSummary` | 유사 case 집단의 집계 통계 | `TimelineRecord`, `PrivacyRule` |
 | `SourceRecord` | source URL, checked date, confidence metadata | `VisaProgram`, `Requirement`, `TimelineRecord` |
 | `ChecklistItem` | requirement에서 파생된 사용자 action | `Requirement`, `UserCase` |
@@ -27,8 +32,12 @@ VisaAtGlance는 미국 비자/이민 데이터를 다음 객체로 나누어 관
 | 어떤 비자 category 또는 pathway인가? | `VisaProgram` |
 | 사용자가 만족하거나 제출해야 하는 것은 무엇인가? | `Requirement` |
 | 어느 국가나 jurisdiction의 데이터인가? | `CountryProfile` |
-| 이 사용자의 저장된 관심 조건은 무엇인가? | `UserCase` |
-| 이 case timeline은 어떤 단계와 날짜를 갖는가? | `TimelineRecord` |
+| 이 사용자의 저장된 관심 조건과 claim한 case는 무엇인가? | `UserCase` |
+| 이 case의 안정적인 기본 정보는 무엇인가? | `CaseRecord` |
+| 이 case timeline은 어떤 단계와 날짜를 갖는가? | `CaseEvent` |
+| 로그인 없이 이 case를 다시 수정할 수 있는가? | `CaseEditToken` |
+| 익명 case가 로그인 계정에 연결되었는가? | `CaseClaim` |
+| 비슷한 case가 이미 있는가? | `DuplicateCandidate` |
 | 유사 case 집단의 평균, percentile, sample size는 무엇인가? | `CohortSummary` |
 | 이 정보는 어디에서 왔고 언제 확인했는가? | `SourceRecord` |
 | 사용자가 다음에 해야 할 일은 무엇인가? | `ChecklistItem` |
@@ -40,18 +49,27 @@ VisaAtGlance는 미국 비자/이민 데이터를 다음 객체로 나누어 관
 CountryProfile
   └─ VisaProgram.countryCode
 
+UserCase
+  ├─ CaseClaim.userCaseId
+  ├─ CaseRecord.ownerUserCaseId
+  └─ ChecklistItem.userCaseId
+
+CaseRecord
+  ├─ CaseEvent.caseRecordId
+  ├─ CaseEditToken.caseRecordId
+  ├─ CaseClaim.caseRecordId
+  ├─ DuplicateCandidate.caseRecordId
+  └─ TimelineRecord.caseRecordId
+
 VisaProgram
   ├─ Requirement.visaProgramId
+  ├─ CaseRecord.visaProgramId
   ├─ TimelineRecord.visaProgramId
   └─ SourceRecord.subjectId
 
 TimelineRecord
   ├─ CohortSummary.timelineRecordIds
   └─ SourceRecord.subjectId
-
-UserCase
-  ├─ TimelineRecord.userCaseId
-  └─ ChecklistItem.userCaseId
 
 Requirement
   ├─ ChecklistItem.requirementId
@@ -68,6 +86,11 @@ Requirement
 | `Requirement[]` | `visaatglance.requirements.v1` |
 | `CountryProfile[]` | `visaatglance.countryProfiles.v1` |
 | `UserCase[]` | `visaatglance.userCases.v1` |
+| `CaseRecord[]` | `visaatglance.caseRecords.v1` |
+| `CaseEvent[]` | `visaatglance.caseEvents.v1` |
+| `CaseEditToken[]` | `visaatglance.caseEditTokens.v1` |
+| `CaseClaim[]` | `visaatglance.caseClaims.v1` |
+| `DuplicateCandidate[]` | `visaatglance.duplicateCandidates.v1` |
 | `TimelineRecord[]` | `visaatglance.timelineRecords.v1` |
 | `CohortSummary[]` | `visaatglance.cohortSummaries.v1` |
 | `SourceRecord[]` | `visaatglance.sourceRecords.v1` |
@@ -77,8 +100,10 @@ Requirement
 ## 기본 원칙
 
 - 공개/공식 source와 사용자 입력 timeline을 조용히 섞지 않는다.
+- 사용자 입력은 1회 제출 row가 아니라 `CaseRecord + CaseEvent` 업데이트 구조로 관리한다.
+- 익명 사용자는 private edit link로 같은 case를 계속 업데이트할 수 있고, 로그인 후 optional claim으로 계정에 연결할 수 있다.
 - row-level 원본 데이터 공개는 제한하고, 기본 표현은 aggregate-first로 둔다.
-- `receiptNumber`, 여권 사본, SSN, full case document는 수집하거나 공개하지 않는다.
+- `receiptNumber`, 여권 사본, SSN, full case document는 공개하지 않는다. receipt number가 중복 방지를 위해 필요해지면 원문을 저장하지 않고 hash 처리하며 삭제 가능해야 한다.
 - cohort 통계는 sample size와 기준 필드를 함께 보여준다.
 - small cohort는 percentile이나 상세 비교를 숨기거나 경고한다.
 - source, checked date, limitation은 chart 주변에서 확인 가능해야 한다.
@@ -114,11 +139,14 @@ Requirement
 
 ## TimelineRecord
 
-`TimelineRecord`는 i485tracker 형식에 가까운 normalized I-485 case timeline record다. Spreadsheet 원본 컬럼은 ingestion 단계에서 이 형식으로 변환한다.
+`TimelineRecord`는 i485tracker 형식에 가까운 normalized I-485 source snapshot이다. Spreadsheet, public dataset, imported user contribution은 ingestion 단계에서 이 형식으로 변환되어 aggregate 계산에 들어간다.
+
+사용자가 직접 입력하고 계속 업데이트하는 제품 내부 모델은 `CaseRecord + CaseEvent`가 기준이다. `TimelineRecord`는 외부 source shape를 보존한 normalized layer이며, 필요할 때 `caseRecordId`로 내부 case와 연결할 수 있다.
 
 | 필드 | 타입 | 목적 | 예시 |
 |---|---|---|---|
 | `id` | `string` | 고유 ID | `source-i485tracker-dev:case-1` |
+| `caseRecordId` | `string?` | 내부 case와 연결된 경우의 ID | `case-abc123` |
 | `pd` | `string?` | priority date | `2023-07-07` |
 | `cat` | `string` | visa category | `EB2 NIW` |
 | `filed` | `string?` | I-485 filed/received date | `2026-04-01` |
@@ -149,6 +177,134 @@ Requirement
 - full `receiptNumber`를 저장하거나 공개하지 않는다. 개발용 adapter도 `receipt_num`은 partial `receiptBlock`으로 제한한다.
 - 여권 사본, SSN, full case document를 연결하지 않는다.
 - `notes`, `coc`, `receiptBlock`은 public dashboard row에 직접 노출하지 않고 aggregate/privacy guard 뒤에 둔다.
+
+## CaseRecord
+
+`CaseRecord`는 사용자가 생성하거나 나중에 claim할 수 있는 I-485 case의 안정적인 기본 record다. 한 번 만든 뒤 같은 case에 `CaseEvent`가 계속 추가되거나 수정된다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `id` | `string` | 내부 case ID. edit token과 분리 | `case-abc123` |
+| `publicCaseKey` | `string` | URL 또는 UI에서 쓰는 비밀이 아닌 case key | `c_9f12ab` |
+| `ownerUserCaseId` | `string?` | 로그인 후 claim된 사용자 case ID | `case-default` |
+| `visaProgramId` | `string?` | 연결된 visa program | `us-eb2` |
+| `formType` | `string` | 신청 form | `I-485` |
+| `category` | `string` | visa category | `EB2 NIW` |
+| `country` | `string?` | country 또는 ROW/NROW 후보 | `ROW` |
+| `serviceCenter` | `string?` | service center 또는 processing office | `NBC` |
+| `fieldOffice` | `string?` | field office | `Chicago, IL` |
+| `priorityDate` | `string?` | priority date | `2023-08-17` |
+| `filedDate` | `string?` | filed date | `2024-12-20` |
+| `receiptDate` | `string?` | receipt notice date | `2026-03-27` |
+| `receiptHash` | `string?` | 중복 방지용 hash. 원문 저장 금지 | `sha256:...` |
+| `receiptBlock` | `string?` | 공개하지 않는 partial block 후보 | `IOE09361` |
+| `sourceKind` | `user-submitted \| imported-public \| claimed-import` | 생성 경로 | `user-submitted` |
+| `visibility` | `private \| aggregate-only` | 공개 범위 | `aggregate-only` |
+| `status` | `active \| archived \| deleted` | case lifecycle | `active` |
+| `createdAt` | `string` | 생성 시각 ISO string | `2026-05-09T18:00:00.000Z` |
+| `updatedAt` | `string` | 마지막 업데이트 시각 ISO string | `2026-05-10T18:00:00.000Z` |
+
+기준:
+
+- `publicCaseKey`는 case 식별용이며 수정 권한을 주지 않는다.
+- 수정 권한은 `CaseEditToken`이 담당한다.
+- receipt number를 받는 경우에도 원문은 저장하지 않고 `receiptHash`만 저장한다.
+- `receiptBlock`, `country`, `fieldOffice`, `serviceCenter` 조합이 rare detail이 될 수 있으므로 public row에는 직접 노출하지 않는다.
+
+## CaseEvent
+
+`CaseEvent`는 case timeline에서 계속 업데이트되는 개별 사건이다. i485tracker raw field의 `bio`, `ead`, `ap`, `fo_transfer_date`, `silent`, `gc_approved`, `gc_received`, `interview`, `rfe` 같은 날짜/상태는 내부 모델에서 event로 분리한다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `id` | `string` | event ID | `event-123` |
+| `caseRecordId` | `string` | 연결 case | `case-abc123` |
+| `eventType` | `filed \| receipt \| biometrics \| ead_approved \| ap_approved \| field_office_transfer \| silent_update \| interview \| rfe \| rfe_response \| approved \| card_received \| other` | timeline event 종류 | `biometrics` |
+| `eventDate` | `string?` | event 날짜 | `2026-04-30` |
+| `eventStatus` | `active \| corrected \| deleted` | 수정 이력 상태 | `active` |
+| `metadata` | `Record<string, string>?` | 구조화 가능한 추가 정보 | `{ "rfe": "medical" }` |
+| `note` | `string?` | private note. public 직접 노출 금지 | `2 FTA0s after Biometrics.` |
+| `sourceRecordId` | `string?` | source 연결 | `source-i485tracker-full-cache` |
+| `createdAt` | `string` | 생성 시각 ISO string | `2026-05-09T18:00:00.000Z` |
+| `updatedAt` | `string` | 수정 시각 ISO string | `2026-05-10T18:00:00.000Z` |
+
+기준:
+
+- 같은 case에 여러 event를 누적해 업데이트한다.
+- 사용자가 날짜를 고치면 기존 event를 덮어쓰기보다 `corrected` 상태 또는 audit 가능한 update로 관리하는 방향을 우선 검토한다.
+- public dashboard는 `CaseEvent` row를 직접 노출하지 않고 aggregate 계산 결과만 표시한다.
+
+## CaseEditToken
+
+`CaseEditToken`은 로그인 없이 case를 다시 수정할 수 있게 하는 private edit link 권한이다. URL에 포함되는 원문 token은 사용자에게 한 번 보여주되, 저장소에는 hash만 둔다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `id` | `string` | token record ID | `edit-token-123` |
+| `caseRecordId` | `string` | 수정 가능한 case | `case-abc123` |
+| `tokenHash` | `string` | edit token hash. 원문 저장 금지 | `sha256:...` |
+| `scope` | `edit-case \| claim-case` | 권한 범위 | `edit-case` |
+| `createdAt` | `string` | 생성 시각 ISO string | `2026-05-09T18:00:00.000Z` |
+| `lastUsedAt` | `string?` | 마지막 사용 시각 | `2026-05-10T18:00:00.000Z` |
+| `expiresAt` | `string?` | 만료 시각. 초기에는 optional | `2026-08-09T18:00:00.000Z` |
+| `revokedAt` | `string?` | 폐기 시각 | `2026-05-11T18:00:00.000Z` |
+
+보안 기준:
+
+- edit link는 사실상 비밀번호처럼 취급한다.
+- analytics, log, referrer, public page에 edit token이 남지 않게 한다.
+- public case key와 edit token은 분리한다.
+- 사용자가 로그인 후 claim하면 기존 edit token을 유지할지 폐기할지 별도 정책으로 정한다.
+
+## CaseClaim
+
+`CaseClaim`은 익명 case를 나중에 로그인 계정에 연결한 기록이다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `id` | `string` | claim ID | `claim-123` |
+| `caseRecordId` | `string` | claim 대상 case | `case-abc123` |
+| `userCaseId` | `string` | 연결되는 로그인 사용자 case/profile | `case-default` |
+| `claimMethod` | `edit-token \| receipt-hash-review \| admin-review` | claim 방식 | `edit-token` |
+| `claimedAt` | `string` | claim 시각 ISO string | `2026-05-10T18:00:00.000Z` |
+| `revokedAt` | `string?` | claim 해제 시각 | `null` |
+
+기준:
+
+- 초기 입력은 로그인 없이 가능해야 한다.
+- 로그인 후 `Claim this case` 흐름으로 saved timeline, alerts, custom dashboard와 연결한다.
+- claim은 공개 output을 바꾸지 않고 private ownership만 바꾼다.
+
+## DuplicateCandidate
+
+`DuplicateCandidate`는 새 입력이 기존 case와 너무 비슷할 때 사용자에게 기존 case 업데이트를 제안하기 위한 내부 판단 결과다.
+
+| 필드 | 타입 | 목적 | 예시 |
+|---|---|---|---|
+| `id` | `string` | 후보 ID | `dup-123` |
+| `caseRecordId` | `string` | 기존 case | `case-abc123` |
+| `candidateInputHash` | `string` | 새 입력 조합의 hash | `sha256:...` |
+| `matchedFields` | `string[]` | 비슷하다고 판단한 필드 | `["formType", "category", "filedDate"]` |
+| `score` | `number` | 유사도 점수 | `0.86` |
+| `createdAt` | `string` | 생성 시각 ISO string | `2026-05-10T18:00:00.000Z` |
+
+초기 중복 후보 필드:
+
+- `formType`
+- `category`
+- `country`
+- `serviceCenter`
+- `fieldOffice`
+- `filedDate`
+- `receiptDate`
+- `priorityDate`
+- `biometricsDate`
+
+기준:
+
+- 중복 후보는 자동 병합하지 않는다.
+- 사용자에게 “비슷한 케이스가 이미 있습니다. 기존 케이스를 업데이트하시겠습니까?” 수준으로 제안한다.
+- receipt number를 쓰는 경우에도 원문 비교가 아니라 hash 또는 파생값 비교만 허용한다.
 
 ## CohortSummary
 
@@ -208,7 +364,7 @@ Requirement
 
 ## UserCase
 
-`UserCase`는 사용자가 저장한 scenario와 관심 조건을 저장한다.
+`UserCase`는 로그인 사용자의 저장한 scenario, 관심 조건, claim한 case 목록을 저장한다. 로그인 전 익명 case 자체는 `CaseRecord`와 `CaseEditToken`으로 관리하고, 로그인 후 claim되면 `CaseClaim`으로 연결한다.
 
 | 필드 | 타입 | 목적 | 예시 |
 |---|---|---|---|
@@ -217,6 +373,7 @@ Requirement
 | `email` | `string?` | optional email | `user@example.com` |
 | `savedVisaProgramIds` | `string[]` | 저장한 visa category | `["us-eb2"]` |
 | `savedCohortIds` | `string[]` | 저장한 cohort | `["cohort-eb2-nebraska-2025-q1"]` |
+| `claimedCaseRecordIds` | `string[]` | claim한 case records | `["case-abc123"]` |
 | `alertOptIn` | `boolean` | alert 수신 여부 | `false` |
 
 ## ChecklistItem
@@ -247,11 +404,24 @@ Requirement
 
 ## Normalized ingestion 기준
 
-Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/aggregate layer` 순서로 처리한다.
+Phase 3 ingestion은 `raw source -> normalized TimelineRecord -> privacy/aggregate layer` 순서로 처리한다.
+
+사용자 입력은 Phase 4부터 `anonymous case creation -> CaseRecord -> CaseEvent updates -> optional CaseClaim -> aggregate-only public output` 순서로 처리한다. 외부 source snapshot과 사용자가 계속 수정하는 case record를 같은 row 모델로 섞지 않는다.
 
 ### i485tracker-like local mock adapter
 
-`i485tracker`의 공개 shape는 schema reference로만 사용하고, 개발은 repo 안의 작은 local mock fixture로 진행한다.
+`i485tracker`의 공개 shape는 schema reference로 사용한다. 개발은 repo 안의 작은 local mock fixture와 ignored full-data cache를 함께 참고하되, full raw data는 커밋하지 않는다.
+
+2026-05-09 기준 `backend/.data/i485tracker_cases.full.json`에서 확인한 raw field는 다음과 같다.
+
+```text
+id, pd, cat, filed, receipt, receipt_num, bio, ead, ap,
+field_office, fo_transfer_date, silent, gc_approved, gc_received,
+interview, coc, rfe, region, notes, last_updated, created_at,
+has_password
+```
+
+이 raw shape는 한 row 안에 여러 timeline event가 들어 있는 source snapshot이다. 제품 내부 사용자 입력 모델에서는 이 날짜/상태들을 `CaseEvent`로 분리한다.
 
 | i485tracker 필드 | Backend 필드 | 기준 |
 |---|---|---|
@@ -259,7 +429,7 @@ Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/a
 | `cat` | `cat` | 필수 category |
 | `filed` | `filed` | processing start |
 | `receipt` | `receipt` | receipt event |
-| `receipt_num` | `receiptBlock` | partial block만 보관 |
+| `receipt_num` | `receiptBlock` 또는 `receiptHash` | public row 노출 금지. 중복 방지에 쓰면 원문 저장 없이 hash |
 | `bio` | `bio` | biometric event |
 | `ead` | `ead` | EAD event |
 | `ap` | `ap` | Advance Parole event |
@@ -274,7 +444,7 @@ Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/a
 | `region` | `region` | cohort filter 후보 |
 | `notes` | `notes` | public row 직접 노출 금지 |
 | `last_updated` | `lastUpdated` | freshness 후보 |
-| `has_password` | `hasPassword` | user contribution UX 참고 |
+| `has_password` | `hasPassword` | private edit link UX 참고 |
 
 주의:
 
@@ -283,6 +453,7 @@ Phase 3부터 ingestion은 `raw source -> normalized TimelineRecord -> privacy/a
 - production source로 장기 사용하려면 permission/license/운영 리스크를 별도 확인한다.
 - full raw data를 repo에 커밋하지 않는다. 테스트와 개발은 작은 fixture만 사용한다.
 - 모든 경로는 repo root(`/Users/kimdoyeong/Documents/VisaAtGlance`) 기준으로 기록한다. 규모별 visualization, data quality, performance 비교가 필요할 때만 `cd backend && PYTHONPATH=. uv run python scripts/fetch_i485tracker_full.py`를 실행한다. full-data cache는 `backend/.data/i485tracker_cases.full.json`과 `backend/.data/i485tracker_quality_report.json`에 생성되며 git에 커밋하지 않는다.
+- `receipt_num`, `notes`, `coc`, edit 권한 힌트는 private/internal data로 취급하고 public aggregate response에는 직접 포함하지 않는다.
 
 
 ### Phase 3 validation gate 결과
