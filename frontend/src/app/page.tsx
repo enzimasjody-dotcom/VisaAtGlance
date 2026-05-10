@@ -1,9 +1,9 @@
 import { ProcessingPreviewChart } from "@/components/dashboard/ProcessingPreviewChart";
 
-const publicMetrics = [
-  { label: "Average wait", value: "116 days", detail: "sample public cohort" },
-  { label: "Recent approvals", value: "2,418", detail: "last 30 days" },
-  { label: "Visa bulletin", value: "+3 weeks", detail: "EB2 movement" },
+const previewMetrics = [
+  { label: "Analysis model", value: "Pending-aware", detail: "cohort timeline context" },
+  { label: "Privacy guard", value: "Active", detail: "aggregate-only display" },
+  { label: "Production data", value: "Pending", detail: "i485tracker-style review" },
 ];
 
 const sections = [
@@ -72,7 +72,7 @@ export default function Home() {
           </div>
           <ProcessingPreviewChart />
           <dl className="mt-6 grid gap-3 sm:grid-cols-3">
-            {publicMetrics.map((metric) => (
+            {previewMetrics.map((metric) => (
               <div key={metric.label} className="rounded-md border border-slate-200 p-4">
                 <dt className="text-sm text-slate-500">{metric.label}</dt>
                 <dd className="mt-2 text-2xl font-semibold text-slate-950">{metric.value}</dd>
@@ -80,6 +80,12 @@ export default function Home() {
               </div>
             ))}
           </dl>
+          <div className="mt-4 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
+            <p>
+              Public dashboard metrics will use cohort movement and pending-aware timeline
+              analysis after the i485tracker-like analytics model is reviewed.
+            </p>
+          </div>
         </div>
       </section>
 
